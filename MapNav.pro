@@ -12,11 +12,13 @@ SOURCES += \
     core.cpp \
     main.cpp \
     mainwindow.cpp \
+    nearby.cpp \
     view.cpp
 
 HEADERS += \
     core.h \
     mainwindow.h \
+    nearby.h \
     view.h
 
 FORMS += \

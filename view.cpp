@@ -4,16 +4,31 @@
 
 MapView::MapView(QWidget *parent) : QWidget(parent),
     m_currentMouseWorldPos(0, 0),
-    m_currentMouseScreenPos(0, 0)
+    m_currentMouseScreenPos(0, 0),
+    m_highlighter(nullptr)  // 初始化为nullptr
 {
     setFocusPolicy(Qt::StrongFocus);
-    setMouseTracking(true);  // 启用鼠标追踪
+    setMouseTracking(true);
+    // 不在构造函数中创建高亮器，将在setMap中创建
 }
 
+// 添加高亮方法
+void MapView::highlightNearby(const QPointF& center)
+{
+    if (m_highlighter) {
+        m_highlighter->highlightNearby(center);
+    }
+}
 
 void MapView::setMap(Map* map)
 {
     m_map = map;
+    // 确保在设置地图后才创建高亮器
+    if (m_map && !m_highlighter) {
+        m_highlighter = new NearbyHighlighter(m_map, this);
+        connect(m_highlighter, &NearbyHighlighter::updateRequested,
+                this, QOverload<>::of(&QWidget::update));
+    }
     update();
 }
 
@@ -111,6 +126,7 @@ void MapView::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton) {
         m_lastMousePos = event->pos();
+        highlightNearby(screenToWorld(event->pos()));
     }
 }
 
@@ -212,26 +228,34 @@ void MapView::renderEdges(QPainter& painter)
     if (!m_map) return;
     QPolygonF visiblePoly = getVisibleWorldPolygon();
     const int edgeCount = m_map->getEdgeCount();
+
     for (int i = 0; i < edgeCount; ++i) {
         const Edge* edge = m_map->getEdge(i);
         if (!edge) continue;
+
         const Vertex* from = m_map->getVertex(edge->fromVertex);
         const Vertex* to = m_map->getVertex(edge->toVertex);
         if (!from || !to) continue;
+
         // 精确的可见性判断
         if (!isVisibleInView(from->position) &&
             !isVisibleInView(to->position)) {
             continue;
         }
+        // 检查是否高亮
+        bool isHighlighted = m_highlighter && m_highlighter->isEdgeHighlighted(i);
 
-        // 根据车流量设置颜色
-        double ratio = static_cast<double>(edge->currentVehicles) / edge->capacity;
+        // 根据车流量或高亮状态设置颜色
         QColor color;
-        if (ratio < 0.3) color = Qt::green;
-        else if (ratio < 0.7) color = Qt::yellow;
-        else color = Qt::red;
-
-        painter.setPen(QPen(color, 2));
+        if (isHighlighted) {
+            color = Qt::magenta;
+        } else {
+            double ratio = static_cast<double>(edge->currentVehicles) / edge->capacity;
+            if (ratio < 0.3) color = Qt::green;
+            else if (ratio < 0.7) color = Qt::yellow;
+            else color = Qt::red;
+        }
+        painter.setPen(QPen(color, isHighlighted ? 4 : 2));
         painter.drawLine(from->position, to->position);
     }
 }
@@ -242,12 +266,23 @@ void MapView::renderVertices(QPainter& painter)
     if (!m_map) return;
     QPolygonF visiblePoly = getVisibleWorldPolygon();
     const int vertexCount = m_map->getVertexCount();
+
+    // 先绘制普通顶点
     painter.setPen(Qt::black);
     painter.setBrush(Qt::blue);
     for (int i = 0; i < vertexCount; ++i) {
         const Vertex* vertex = m_map->getVertex(i);
         if (!vertex || !isVisibleInView(vertex->position)) continue;
-        painter.drawEllipse(vertex->position, 3, 3);
+
+        // 检查是否高亮
+        bool isHighlighted = m_highlighter && m_highlighter->isVertexHighlighted(i);
+        if (isHighlighted) {
+            painter.setBrush(Qt::red);
+            painter.drawEllipse(vertex->position, 5, 5);
+            painter.setBrush(Qt::blue);
+        } else {
+            painter.drawEllipse(vertex->position, 3, 3);
+        }
     }
 }
 

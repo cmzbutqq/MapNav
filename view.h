@@ -8,6 +8,7 @@
 #include <QTimer>
 #include <QPolygonF>
 #include "core.h"
+#include "nearby.h"
 
 class MapView : public QWidget
 {
@@ -18,6 +19,7 @@ public:
     void setMap(Map* map);
     void setSimulator(Simulator* simulator);
     QPointF getMouseWorldPos() const;  // 获取当前鼠标位置对应的世界坐标
+    void highlightNearby(const QPointF& center);
 protected:
     void paintEvent(QPaintEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
@@ -26,6 +28,7 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
 
 private:
+    NearbyHighlighter* m_highlighter;
     QPointF m_currentMouseWorldPos;    // 当前鼠标位置对应的世界坐标
     QPoint m_currentMouseScreenPos;    // 当前鼠标屏幕位置
     // 视角控制参数
