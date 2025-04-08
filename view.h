@@ -6,6 +6,7 @@
 #include <QWheelEvent>
 #include <QKeyEvent>
 #include <QTimer>
+#include <QPolygonF>
 #include "core.h"
 
 class MapView : public QWidget
@@ -26,10 +27,10 @@ protected:
 
 private:
     // 视角控制参数
-    QPointF m_viewCenter{500, 500};  // 视图中心坐标
-    double m_zoomLevel = 1.0;        // 缩放级别
-    double m_rotation = 0.0;         // 旋转角度(弧度)
-    QPoint m_lastMousePos;           // 鼠标位置记录
+    QPointF m_viewCenter{500, 500};
+    double m_zoomLevel = 1.0;
+    double m_rotation = 0.0;
+    QPoint m_lastMousePos;
 
     // 数据引用
     Map* m_map = nullptr;
@@ -38,6 +39,7 @@ private:
     // 转换函数
     QPointF worldToScreen(const QPointF& worldPos) const;
     QPointF screenToWorld(const QPoint& screenPos) const;
+    QTransform getWorldToScreenTransform() const;
 
     // 渲染函数
     void renderGrid(QPainter& painter);
@@ -51,7 +53,8 @@ private:
     void rotate(double angle);
 
     // 可见区域计算
-    QRectF getVisibleWorldRect() const;
+    QPolygonF getVisibleWorldPolygon() const;
+    bool isVisibleInView(const QPointF& worldPos) const;
 };
 
 #endif // VIEW_H
