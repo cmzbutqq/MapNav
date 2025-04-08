@@ -106,8 +106,8 @@ void MapView::mouseMoveEvent(QMouseEvent* event)
     if (event->buttons() & Qt::LeftButton) {
         QPoint delta = event->pos() - m_lastMousePos;
 
-        double cosAngle = cos(m_rotation);
-        double sinAngle = sin(m_rotation);
+        double cosAngle = cos(-m_rotation);
+        double sinAngle = sin(-m_rotation);
 
         QPointF moveDelta(
             (delta.x() * cosAngle - delta.y() * sinAngle) / m_zoomLevel,
