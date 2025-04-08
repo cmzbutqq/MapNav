@@ -76,6 +76,7 @@ void MapView::paintEvent(QPaintEvent* event)
     painter.drawText(10, 110, QString("视角中心: (%1,%2)")
                                   .arg(m_viewCenter.x(), 0, 'f', 1)
                                   .arg(m_viewCenter.y(), 0, 'f', 1));
+    painter.drawText(10, 130, "按住Ctrl键点击可高亮附近点");
 }
 
 void MapView::wheelEvent(QWheelEvent* event)
@@ -126,15 +127,27 @@ void MapView::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton) {
         m_lastMousePos = event->pos();
-        highlightNearby(screenToWorld(event->pos()));
+
+        // 检查是否按下了Ctrl键
+        if (event->modifiers() & Qt::ControlModifier) {
+            highlightNearby(screenToWorld(event->pos()));
+        }
     }
 }
+
 
 void MapView::mouseMoveEvent(QMouseEvent* event)
 {
     // 更新鼠标位置
     m_currentMouseScreenPos = event->pos();
     m_currentMouseWorldPos = screenToWorld(event->pos());
+
+    // 根据Ctrl键状态改变光标
+    if (event->modifiers() & Qt::ControlModifier) {
+        setCursor(Qt::CrossCursor);
+    } else {
+        setCursor(Qt::ArrowCursor);
+    }
 
     if (event->buttons() & Qt::LeftButton) {
         QPoint delta = event->pos() - m_lastMousePos;
