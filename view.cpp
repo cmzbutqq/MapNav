@@ -40,6 +40,14 @@ void MapView::paintEvent(QPaintEvent* event)
     renderEdges(painter);
     renderVertices(painter);
     renderVehicles(painter);
+    // 绘制指南针
+    painter.resetTransform();
+    painter.setPen(Qt::white);
+    painter.drawText(10, 20, QString("方向: %1°").arg(m_rotation * 180 / M_PI, 0, 'f', 1));
+
+    QPoint center(30, 40);
+    painter.drawEllipse(center, 15, 15);
+    painter.drawLine(center, center + QPoint(15 * sin(m_rotation), -15 * cos(m_rotation)));
 }
 
 void MapView::wheelEvent(QWheelEvent* event)
@@ -53,16 +61,38 @@ void MapView::keyPressEvent(QKeyEvent* event)
     const double panStep = 50.0 / m_zoomLevel;
     const double rotateStep = 0.1;
 
+    // 计算基于当前旋转角度的移动向量
+    double cosAngle = cos(m_rotation);
+    double sinAngle = sin(m_rotation);
+
+    QPointF moveDelta;
     switch (event->key()) {
-    case Qt::Key_W: pan(QPointF(0, -panStep)); break;
-    case Qt::Key_S: pan(QPointF(0, panStep)); break;
-    case Qt::Key_A: pan(QPointF(-panStep, 0)); break;
-    case Qt::Key_D: pan(QPointF(panStep, 0)); break;
-    case Qt::Key_Q: rotate(-rotateStep); break;
-    case Qt::Key_E: rotate(rotateStep); break;
-    default: QWidget::keyPressEvent(event);
+    case Qt::Key_W:
+        moveDelta = QPointF(-sinAngle * panStep, -cosAngle * panStep);
+        break;
+    case Qt::Key_S:
+        moveDelta = QPointF(sinAngle * panStep, cosAngle * panStep);
+        break;
+    case Qt::Key_A:
+        moveDelta = QPointF(-cosAngle * panStep, sinAngle * panStep);
+        break;
+    case Qt::Key_D:
+        moveDelta = QPointF(cosAngle * panStep, -sinAngle * panStep);
+        break;
+    case Qt::Key_Q:
+        rotate(-rotateStep);
+        return;
+    case Qt::Key_E:
+        rotate(rotateStep);
+        return;
+    default:
+        QWidget::keyPressEvent(event);
+        return;
     }
+
+    pan(moveDelta);
 }
+
 
 void MapView::mousePressEvent(QMouseEvent* event)
 {
@@ -75,10 +105,20 @@ void MapView::mouseMoveEvent(QMouseEvent* event)
 {
     if (event->buttons() & Qt::LeftButton) {
         QPoint delta = event->pos() - m_lastMousePos;
-        pan(QPointF(-delta.x() / m_zoomLevel, -delta.y() / m_zoomLevel));
+
+        double cosAngle = cos(m_rotation);
+        double sinAngle = sin(m_rotation);
+
+        QPointF moveDelta(
+            (delta.x() * cosAngle - delta.y() * sinAngle) / m_zoomLevel,
+            (delta.x() * sinAngle + delta.y() * cosAngle) / m_zoomLevel
+            );
+
+        pan(-moveDelta);
         m_lastMousePos = event->pos();
     }
 }
+
 
 // =====坐标转换=====
 QTransform MapView::getWorldToScreenTransform() const
@@ -146,11 +186,6 @@ void MapView::renderGrid(QPainter& painter)
         }
     }
 }
-
-
-
-
-
 
 
 void MapView::renderEdges(QPainter& painter)
@@ -226,5 +261,9 @@ void MapView::pan(const QPointF& delta)
 void MapView::rotate(double angle)
 {
     m_rotation += angle;
+    // 保持角度在0-2π范围内
+    while (m_rotation > 2*M_PI) m_rotation -= 2*M_PI;
+    while (m_rotation < 0) m_rotation += 2*M_PI;
     update();
 }
+
