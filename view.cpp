@@ -1,4 +1,5 @@
 #include "view.h"
+#include "pathfind.h"
 #include <cmath>
 #include <QDebug>
 
@@ -123,16 +124,57 @@ void MapView::keyPressEvent(QKeyEvent* event)
 }
 
 
-void MapView::mousePressEvent(QMouseEvent* event)
-{
+void MapView::mousePressEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
         m_lastMousePos = event->pos();
-
-        // 检查是否按下了Ctrl键
+        QPointF worldPos = screenToWorld(event->pos());
         if (event->modifiers() & Qt::ControlModifier) {
-            highlightNearby(screenToWorld(event->pos()));
+            highlightNearby(worldPos);
+        } else {
+            // 寻找最近的顶点
+            int nearest = findNearestVertex(worldPos);
+            if (nearest != -1) {
+                if (m_startVertex == -1) {
+                    m_startVertex = nearest;
+                } else if (m_endVertex == -1) {
+                    m_endVertex = nearest;
+                    // 执行寻路
+                    auto finder = PathFinder::create(PathFinder::Algorithm::Dijkstra, m_map);
+                    auto result = finder->findPath(m_startVertex, m_endVertex);
+                    if (result.success) {
+                        setPath(result.path);
+                    }
+                } else {
+                    // 重新开始选择
+                    clearPath();
+                    m_startVertex = nearest;
+                }
+            }
         }
     }
+}
+
+int MapView::findNearestVertex(const QPointF& pos) const {
+    if (!m_map) return -1;
+
+    int nearest = -1;
+    double minDist = std::numeric_limits<double>::max();
+
+    for (int i = 0; i < m_map->getVertexCount(); ++i) {
+        const Vertex* v = m_map->getVertex(i);
+        if (!v) continue;
+
+        double dx = v->position.x() - pos.x();
+        double dy = v->position.y() - pos.y();
+        double dist = dx*dx + dy*dy;
+
+        if (dist < minDist) {
+            minDist = dist;
+            nearest = i;
+        }
+    }
+
+    return nearest;
 }
 
 
@@ -271,6 +313,28 @@ void MapView::renderEdges(QPainter& painter)
         painter.setPen(QPen(color, isHighlighted ? 4 : 2));
         painter.drawLine(from->position, to->position);
     }
+    if (!m_currentPath.empty()) {
+        painter.setPen(QPen(Qt::yellow, 4));
+        for (size_t i = 0; i < m_currentPath.size() - 1; ++i) {
+            const Vertex* v1 = m_map->getVertex(m_currentPath[i]);
+            const Vertex* v2 = m_map->getVertex(m_currentPath[i+1]);
+            if (v1 && v2) {
+                painter.drawLine(v1->position, v2->position);
+            }
+        }
+    }
+}
+
+// 路径操作方法
+void MapView::clearPath() {
+    m_currentPath.clear();
+    m_startVertex = -1;
+    m_endVertex = -1;
+    update();
+}
+void MapView::setPath(const std::vector<int>& path) {
+    m_currentPath = path;
+    update();
 }
 
 

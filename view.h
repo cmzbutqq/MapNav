@@ -20,6 +20,9 @@ public:
     void setSimulator(Simulator* simulator);
     QPointF getMouseWorldPos() const;  // 获取当前鼠标位置对应的世界坐标
     void highlightNearby(const QPointF& center);
+    void clearPath();
+    void setPath(const std::vector<int>& path);
+    int findNearestVertex(const QPointF& pos) const;
 protected:
     void paintEvent(QPaintEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
@@ -28,6 +31,9 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
 
 private:
+    std::vector<int> m_currentPath; // 当前显示的路径
+    int m_startVertex = -1;         // 起点ID
+    int m_endVertex = -1;           // 终点ID
     NearbyHighlighter* m_highlighter;
     QPointF m_currentMouseWorldPos;    // 当前鼠标位置对应的世界坐标
     QPoint m_currentMouseScreenPos;    // 当前鼠标屏幕位置

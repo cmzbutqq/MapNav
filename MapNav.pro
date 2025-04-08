@@ -13,12 +13,14 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     nearby.cpp \
+    pathfind.cpp \
     view.cpp
 
 HEADERS += \
     core.h \
     mainwindow.h \
     nearby.h \
+    pathfind.h \
     view.h
 
 FORMS += \
