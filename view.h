@@ -17,7 +17,7 @@ public:
     explicit MapView(QWidget *parent = nullptr);
     void setMap(Map* map);
     void setSimulator(Simulator* simulator);
-
+    QPointF getMouseWorldPos() const;  // 获取当前鼠标位置对应的世界坐标
 protected:
     void paintEvent(QPaintEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
@@ -26,6 +26,8 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
 
 private:
+    QPointF m_currentMouseWorldPos;    // 当前鼠标位置对应的世界坐标
+    QPoint m_currentMouseScreenPos;    // 当前鼠标屏幕位置
     // 视角控制参数
     QPointF m_viewCenter{500, 500};
     double m_zoomLevel = 1.0;

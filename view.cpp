@@ -2,11 +2,14 @@
 #include <cmath>
 #include <QDebug>
 
-MapView::MapView(QWidget *parent) : QWidget(parent)
+MapView::MapView(QWidget *parent) : QWidget(parent),
+    m_currentMouseWorldPos(0, 0),
+    m_currentMouseScreenPos(0, 0)
 {
     setFocusPolicy(Qt::StrongFocus);
-    setMouseTracking(true);
+    setMouseTracking(true);  // 启用鼠标追踪
 }
+
 
 void MapView::setMap(Map* map)
 {
@@ -23,31 +26,41 @@ void MapView::setSimulator(Simulator* simulator)
 void MapView::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event);
-
     if (!m_map) return;
-
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-
     // 设置视图变换
     painter.translate(width() / 2, height() / 2);
     painter.scale(m_zoomLevel, m_zoomLevel);
     painter.rotate(m_rotation * 180 / M_PI);
     painter.translate(-m_viewCenter.x(), -m_viewCenter.y());
-
     // 渲染顺序：网格 -> 边 -> 顶点 -> 车辆
     renderGrid(painter);
     renderEdges(painter);
     renderVertices(painter);
     renderVehicles(painter);
-    // 绘制指南针
+    // 绘制指南针和坐标信息
     painter.resetTransform();
     painter.setPen(Qt::white);
-    painter.drawText(10, 20, QString("方向: %1°").arg(m_rotation * 180 / M_PI, 0, 'f', 1));
 
+    // 绘制指南针
+    painter.drawText(10, 20, QString("方向: %1°").arg(m_rotation * 180 / M_PI, 0, 'f', 1));
     QPoint center(30, 40);
     painter.drawEllipse(center, 15, 15);
     painter.drawLine(center, center + QPoint(15 * sin(m_rotation), -15 * cos(m_rotation)));
+
+    // 绘制鼠标坐标
+    painter.drawText(10, 70, QString("屏幕坐标: (%1,%2)")
+                                 .arg(m_currentMouseScreenPos.x())
+                                 .arg(m_currentMouseScreenPos.y()));
+    painter.drawText(10, 90, QString("地图坐标: (%1,%2)")
+                                 .arg(m_currentMouseWorldPos.x(), 0, 'f', 1)
+                                 .arg(m_currentMouseWorldPos.y(), 0, 'f', 1));
+
+    // 绘制当前视角中心坐标
+    painter.drawText(10, 110, QString("视角中心: (%1,%2)")
+                                  .arg(m_viewCenter.x(), 0, 'f', 1)
+                                  .arg(m_viewCenter.y(), 0, 'f', 1));
 }
 
 void MapView::wheelEvent(QWheelEvent* event)
@@ -103,22 +116,28 @@ void MapView::mousePressEvent(QMouseEvent* event)
 
 void MapView::mouseMoveEvent(QMouseEvent* event)
 {
+    // 更新鼠标位置
+    m_currentMouseScreenPos = event->pos();
+    m_currentMouseWorldPos = screenToWorld(event->pos());
+
     if (event->buttons() & Qt::LeftButton) {
         QPoint delta = event->pos() - m_lastMousePos;
-
         double cosAngle = cos(-m_rotation);
         double sinAngle = sin(-m_rotation);
-
         QPointF moveDelta(
             (delta.x() * cosAngle - delta.y() * sinAngle) / m_zoomLevel,
             (delta.x() * sinAngle + delta.y() * cosAngle) / m_zoomLevel
             );
-
         pan(-moveDelta);
         m_lastMousePos = event->pos();
     }
+    update();
 }
-
+// =====坐标获取=====
+QPointF MapView::getMouseWorldPos() const
+{
+    return m_currentMouseWorldPos;
+}
 
 // =====坐标转换=====
 QTransform MapView::getWorldToScreenTransform() const
