@@ -20,12 +20,18 @@ bool isPointInCircumcircle(const QPointF& p, const QPointF& a, const QPointF& b,
     return det > 0;
 }
 
-// 辅助结构体：表示三角形
+// =====辅助结构体：三角形=====
 struct Triangle {
     int a, b, c;
 
     Triangle(int a, int b, int c) : a(a), b(b), c(c) {}
+
+    // 添加 operator== 重载
+    bool operator==(const Triangle& other) const {
+        return a == other.a && b == other.b && c == other.c;
+    }
 };
+
 
 // =====顶点类实现=====
 Vertex::Vertex(int id, const QPointF& pos) : id(id), position(pos) {}
