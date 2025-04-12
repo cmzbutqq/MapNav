@@ -1,6 +1,7 @@
 #include "core.h"
 #include <QRandomGenerator>
 #include <algorithm>
+#include <iostream>
 #include <set>
 #include <vector>
 
@@ -253,6 +254,23 @@ addedEdges.insert(edge);：将当前边添加到 addedEdges
         vertices[edge.toVertex].connectedVertexs.insert(edge.fromVertex);
     }
     Edgecount = edges.count();
+
+    printEdges();
+}
+void Map::printEdges() {
+    std::cout << "Total edges: " << Edgecount << std::endl;
+    for (const auto &edge : edges) {
+        std::cout << "Edge " << edge.id << ": "
+                  << "From " << edge.fromVertex << " ("
+                  << vertices[edge.fromVertex].position.x() << ", "
+                  << vertices[edge.fromVertex].position.y() << ")"
+                  << " To " << edge.toVertex << " ("
+                  << vertices[edge.toVertex].position.x() << ", "
+                  << vertices[edge.toVertex].position.y() << ")"
+                  << " Length: " << edge.length
+                  << " Capacity: " << edge.capacity
+                  << " Current vehicles: " << edge.currentVehicles << std::endl;
+    }
 }
 const Vertex *Map::getVertex(int id) const {
     if (id < 0 || id >= Vertexcount)

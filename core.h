@@ -89,6 +89,7 @@ class Map {
     QVector<Vertex> vertices;
     QVector<Edge> edges;
     GridCell grid[GRID_DIM][GRID_DIM];
+    void printEdges();
 };
 
 // =====模拟器类=====
