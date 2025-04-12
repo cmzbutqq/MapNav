@@ -95,6 +95,7 @@ public:
     int gridSize;
     QVector<Vertex> vertices;
     QVector<Edge> edges;
+    int getVertexCount() const { return Vertexcount; }
     GridCell grid[GRID_DIM][GRID_DIM];
 
 };
