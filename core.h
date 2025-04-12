@@ -1,12 +1,11 @@
 
 #ifndef CORE_H
 #define CORE_H
-#include <random>
 #include <QPointF>
-#include <QVector>
 #include <QSet>
+#include <QVector>
 #include <cmath>
-
+#include <random>
 
 // =====前置声明=====
 struct Vertex;
@@ -18,9 +17,9 @@ struct GridCell;
 struct Vertex {
     int id;
     QPointF position;
-    QSet<int> connectedEdges;//与其相连的边的id
-    QSet<int> connectedVertexs;//与其相连的点的id
-    Vertex(int id = -1, const QPointF& pos = QPointF());
+    QSet<int> connectedEdges;   // 与其相连的边的id
+    QSet<int> connectedVertexs; // 与其相连的点的id
+    Vertex(int id = -1, const QPointF &pos = QPointF());
     void addEdge(int edgeId);
 };
 
@@ -32,11 +31,10 @@ struct Edge {
     double length;
     int capacity;
     int currentVehicles;
-    QVector<Vehicle> vehiclesets;//在边中包含车辆类，作为类的属性
+    QVector<Vehicle> vehiclesets; // 在边中包含车辆类，作为类的属性
 
-
-    Edge(int id , int from,int to, double len );
-    double getCurrentTravelTime() ;
+    Edge(int id, int from, int to, double len);
+    double getCurrentTravelTime();
     bool ishappeningaccident();
 
     // 生成指定范围 [a, b] 内的随机数
@@ -53,12 +51,11 @@ struct Vehicle {
 
     int currentEdge;
     double progress;
-    int from ;
+    int from;
     int to;
-    bool processed;//专门用于模拟类中防止一辆车在update中被多次更新
-    Vehicle( int edge ,int fromv,int tov,double pro):currentEdge(edge),progress(pro) , from(fromv), to(tov)
-    {};
-
+    bool processed; // 专门用于模拟类中防止一辆车在update中被多次更新
+    Vehicle(int edge, int fromv, int tov, double pro)
+        : currentEdge(edge), progress(pro), from(fromv), to(tov) {};
 };
 
 // =====网格单元类=====
@@ -69,13 +66,12 @@ struct GridCell {
 
 // =====地图类=====
 class Map {
-public:
+  public:
     Map();
 
-    const Vertex* getVertex(int id) const;
-    const Edge* getEdge(int id) ;
-    const GridCell* getGridCell(int x, int y) ;
-
+    const Vertex *getVertex(int id) const;
+    const Edge *getEdge(int id) const;
+    const GridCell *getGridCell(int x, int y);
 
     // 生成指定范围 [a, b] 内的随机数
     double randomInRange(double a, double b) {
@@ -85,7 +81,7 @@ public:
         return dis(gen);
     }
 
-//我直接声明为公有的了，私有太麻烦了
+    // 我直接声明为公有的了，私有太麻烦了
     static const int GRID_DIM = 15;
     int Vertexcount;
     int Edgecount;
@@ -93,20 +89,16 @@ public:
     QVector<Vertex> vertices;
     QVector<Edge> edges;
     GridCell grid[GRID_DIM][GRID_DIM];
-
 };
 
 // =====模拟器类=====
-class Simulator
-{
-public:
-    Simulator(Map* map);
+class Simulator {
+  public:
+    Simulator(Map *map);
 
     void update(double deltaTime);
 
-private:
-
-    Map* m_map;
-
+  private:
+    Map *m_map;
 };
 #endif // CORE_H
