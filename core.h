@@ -75,9 +75,6 @@ public:
     const Vertex* getVertex(int id) const;
     const Edge* getEdge(int id) ;
     const GridCell* getGridCell(int x, int y) ;
-    int getGridSize();
-    int getVertexCount() ;
-    int getEdgeCount() ;//这几个函数我没用到
 
 
     // 生成指定范围 [a, b] 内的随机数
@@ -95,7 +92,6 @@ public:
     int gridSize;
     QVector<Vertex> vertices;
     QVector<Edge> edges;
-    int getVertexCount() const { return Vertexcount; }
     GridCell grid[GRID_DIM][GRID_DIM];
 
 };

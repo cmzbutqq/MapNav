@@ -1,12 +1,11 @@
 #include "view.h"
 #include "pathfind.h"
-#include <cmath>
 #include <QDebug>
+#include <cmath>
 
-MapView::MapView(QWidget *parent) : QWidget(parent),
-    m_currentMouseWorldPos(0, 0),
-    m_currentMouseScreenPos(0, 0),
-    m_highlighter(nullptr)  // 初始化为nullptr
+MapView::MapView(QWidget *parent)
+    : QWidget(parent), m_currentMouseWorldPos(0, 0),
+      m_currentMouseScreenPos(0, 0), m_highlighter(nullptr) // 初始化为nullptr
 {
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
@@ -14,35 +13,32 @@ MapView::MapView(QWidget *parent) : QWidget(parent),
 }
 
 // 添加高亮方法
-void MapView::highlightNearby(const QPointF& center)
-{
+void MapView::highlightNearby(const QPointF &center) {
     if (m_highlighter) {
         m_highlighter->highlightNearby(center);
     }
 }
 
-void MapView::setMap(Map* map)
-{
+void MapView::setMap(Map *map) {
     m_map = map;
     // 确保在设置地图后才创建高亮器
     if (m_map && !m_highlighter) {
         m_highlighter = new NearbyHighlighter(m_map, this);
-        connect(m_highlighter, &NearbyHighlighter::updateRequested,
-                this, QOverload<>::of(&QWidget::update));
+        connect(m_highlighter, &NearbyHighlighter::updateRequested, this,
+                QOverload<>::of(&QWidget::update));
     }
     update();
 }
 
-void MapView::setSimulator(Simulator* simulator)
-{
+void MapView::setSimulator(Simulator *simulator) {
     m_simulator = simulator;
     update();
 }
 
-void MapView::paintEvent(QPaintEvent* event)
-{
+void MapView::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event);
-    if (!m_map) return;
+    if (!m_map)
+        return;
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     // 设置视图变换
@@ -60,34 +56,37 @@ void MapView::paintEvent(QPaintEvent* event)
     painter.setPen(Qt::white);
 
     // 绘制指南针
-    painter.drawText(10, 20, QString("方向: %1°").arg(m_rotation * 180 / M_PI, 0, 'f', 1));
+    painter.drawText(
+        10, 20, QString("方向: %1°").arg(m_rotation * 180 / M_PI, 0, 'f', 1));
     QPoint center(30, 40);
     painter.drawEllipse(center, 15, 15);
-    painter.drawLine(center, center + QPoint(15 * sin(m_rotation), -15 * cos(m_rotation)));
+    painter.drawLine(
+        center, center + QPoint(15 * sin(m_rotation), -15 * cos(m_rotation)));
 
     // 绘制鼠标坐标
-    painter.drawText(10, 70, QString("屏幕坐标: (%1,%2)")
-                                 .arg(m_currentMouseScreenPos.x())
-                                 .arg(m_currentMouseScreenPos.y()));
-    painter.drawText(10, 90, QString("地图坐标: (%1,%2)")
-                                 .arg(m_currentMouseWorldPos.x(), 0, 'f', 1)
-                                 .arg(m_currentMouseWorldPos.y(), 0, 'f', 1));
+    painter.drawText(10, 70,
+                     QString("屏幕坐标: (%1,%2)")
+                         .arg(m_currentMouseScreenPos.x())
+                         .arg(m_currentMouseScreenPos.y()));
+    painter.drawText(10, 90,
+                     QString("地图坐标: (%1,%2)")
+                         .arg(m_currentMouseWorldPos.x(), 0, 'f', 1)
+                         .arg(m_currentMouseWorldPos.y(), 0, 'f', 1));
 
     // 绘制当前视角中心坐标
-    painter.drawText(10, 110, QString("视角中心: (%1,%2)")
-                                  .arg(m_viewCenter.x(), 0, 'f', 1)
-                                  .arg(m_viewCenter.y(), 0, 'f', 1));
+    painter.drawText(10, 110,
+                     QString("视角中心: (%1,%2)")
+                         .arg(m_viewCenter.x(), 0, 'f', 1)
+                         .arg(m_viewCenter.y(), 0, 'f', 1));
     painter.drawText(10, 130, "按住Ctrl键点击可高亮附近点");
 }
 
-void MapView::wheelEvent(QWheelEvent* event)
-{
+void MapView::wheelEvent(QWheelEvent *event) {
     double zoomFactor = 1.0 + event->angleDelta().y() * 0.001;
     zoom(zoomFactor);
 }
 
-void MapView::keyPressEvent(QKeyEvent* event)
-{
+void MapView::keyPressEvent(QKeyEvent *event) {
     const double panStep = 50.0 / m_zoomLevel;
     const double rotateStep = 0.1;
 
@@ -123,8 +122,7 @@ void MapView::keyPressEvent(QKeyEvent* event)
     pan(moveDelta);
 }
 
-
-void MapView::mousePressEvent(QMouseEvent* event) {
+void MapView::mousePressEvent(QMouseEvent *event) {
     if (event->button() == Qt::LeftButton) {
         m_lastMousePos = event->pos();
         QPointF worldPos = screenToWorld(event->pos());
@@ -139,7 +137,8 @@ void MapView::mousePressEvent(QMouseEvent* event) {
                 } else if (m_endVertex == -1) {
                     m_endVertex = nearest;
                     // 执行寻路
-                    Dijkstra pathfinder = Dijkstra(m_map,m_startVertex, m_endVertex,true);
+                    Dijkstra pathfinder =
+                        Dijkstra(m_map, m_startVertex, m_endVertex, true);
                     PathResult result = pathfinder.findPath();
                     if (result.success) {
                         setPath(result.path);
@@ -154,19 +153,21 @@ void MapView::mousePressEvent(QMouseEvent* event) {
     }
 }
 
-int MapView::findNearestVertex(const QPointF& pos) const {
-    if (!m_map) return -1;
+int MapView::findNearestVertex(const QPointF &pos) const {
+    if (!m_map)
+        return -1;
 
     int nearest = -1;
     double minDist = std::numeric_limits<double>::max();
 
-    for (int i = 0; i < m_map->getVertexCount(); ++i) {
-        const Vertex* v = m_map->getVertex(i);
-        if (!v) continue;
+    for (int i = 0; i < m_map->Vertexcount; ++i) {
+        const Vertex *v = m_map->getVertex(i);
+        if (!v)
+            continue;
 
         double dx = v->position.x() - pos.x();
         double dy = v->position.y() - pos.y();
-        double dist = dx*dx + dy*dy;
+        double dist = dx * dx + dy * dy;
 
         if (dist < minDist) {
             minDist = dist;
@@ -177,9 +178,7 @@ int MapView::findNearestVertex(const QPointF& pos) const {
     return nearest;
 }
 
-
-void MapView::mouseMoveEvent(QMouseEvent* event)
-{
+void MapView::mouseMoveEvent(QMouseEvent *event) {
     // 更新鼠标位置
     m_currentMouseScreenPos = event->pos();
     m_currentMouseWorldPos = screenToWorld(event->pos());
@@ -197,66 +196,57 @@ void MapView::mouseMoveEvent(QMouseEvent* event)
         double sinAngle = sin(-m_rotation);
         QPointF moveDelta(
             (delta.x() * cosAngle - delta.y() * sinAngle) / m_zoomLevel,
-            (delta.x() * sinAngle + delta.y() * cosAngle) / m_zoomLevel
-            );
+            (delta.x() * sinAngle + delta.y() * cosAngle) / m_zoomLevel);
         pan(-moveDelta);
         m_lastMousePos = event->pos();
     }
     update();
 }
 // =====坐标获取=====
-QPointF MapView::getMouseWorldPos() const
-{
-    return m_currentMouseWorldPos;
-}
+QPointF MapView::getMouseWorldPos() const { return m_currentMouseWorldPos; }
 
 // =====坐标转换=====
-QTransform MapView::getWorldToScreenTransform() const
-{
+QTransform MapView::getWorldToScreenTransform() const {
     QTransform transform;
-    transform.translate(width()/2, height()/2);
+    transform.translate(width() / 2, height() / 2);
     transform.scale(m_zoomLevel, m_zoomLevel);
     transform.rotate(m_rotation * 180 / M_PI);
     transform.translate(-m_viewCenter.x(), -m_viewCenter.y());
     return transform;
 }
-QPointF MapView::worldToScreen(const QPointF& worldPos) const
-{
+QPointF MapView::worldToScreen(const QPointF &worldPos) const {
     return getWorldToScreenTransform().map(worldPos);
 }
-QPointF MapView::screenToWorld(const QPoint& screenPos) const
-{
+QPointF MapView::screenToWorld(const QPoint &screenPos) const {
     return getWorldToScreenTransform().inverted().map(QPointF(screenPos));
 }
 // =====可见性判断=====
-QPolygonF MapView::getVisibleWorldPolygon() const
-{
+QPolygonF MapView::getVisibleWorldPolygon() const {
     QPolygonF screenPoly;
-    screenPoly << QPointF(0, 0)
-               << QPointF(width(), 0)
-               << QPointF(width(), height())
-               << QPointF(0, height());
+    screenPoly << QPointF(0, 0) << QPointF(width(), 0)
+               << QPointF(width(), height()) << QPointF(0, height());
 
     QTransform screenToWorld = getWorldToScreenTransform().inverted();
     return screenToWorld.map(screenPoly);
 }
-bool MapView::isVisibleInView(const QPointF& worldPos) const
-{
+bool MapView::isVisibleInView(const QPointF &worldPos) const {
     QPolygonF visiblePoly = getVisibleWorldPolygon();
     return visiblePoly.containsPoint(worldPos, Qt::OddEvenFill);
 }
 // =====渲染函数=====
-void MapView::renderGrid(QPainter& painter)
-{
-    if (!m_map) return;
-    const int gridSize = m_map->getGridSize();
+void MapView::renderGrid(QPainter &painter) {
+    if (!m_map)
+        return;
+    const int gridSize = m_map->gridSize;
     QPolygonF visiblePoly = getVisibleWorldPolygon();
     QRectF visibleRect = visiblePoly.boundingRect();
     // 计算可见网格范围
     int minX = qMax(0, static_cast<int>(visibleRect.left() / gridSize) - 1);
-    int maxX = qMin(1000 / gridSize, static_cast<int>(visibleRect.right() / gridSize) + 1);
+    int maxX = qMin(1000 / gridSize,
+                    static_cast<int>(visibleRect.right() / gridSize) + 1);
     int minY = qMax(0, static_cast<int>(visibleRect.top() / gridSize) - 1);
-    int maxY = qMin(1000 / gridSize, static_cast<int>(visibleRect.bottom() / gridSize) + 1);
+    int maxY = qMin(1000 / gridSize,
+                    static_cast<int>(visibleRect.bottom() / gridSize) + 1);
     painter.setPen(QPen(Qt::gray, 0.5));
     for (int x = minX; x <= maxX; ++x) {
         QPointF p1(x * gridSize, minY * gridSize);
@@ -277,20 +267,21 @@ void MapView::renderGrid(QPainter& painter)
     }
 }
 
-
-void MapView::renderEdges(QPainter& painter)
-{
-    if (!m_map) return;
+void MapView::renderEdges(QPainter &painter) {
+    if (!m_map)
+        return;
     QPolygonF visiblePoly = getVisibleWorldPolygon();
-    const int edgeCount = m_map->getEdgeCount();
+    const int edgeCount = m_map->Edgecount;
 
     for (int i = 0; i < edgeCount; ++i) {
-        const Edge* edge = m_map->getEdge(i);
-        if (!edge) continue;
+        const Edge *edge = m_map->getEdge(i);
+        if (!edge)
+            continue;
 
-        const Vertex* from = m_map->getVertex(edge->fromVertex);
-        const Vertex* to = m_map->getVertex(edge->toVertex);
-        if (!from || !to) continue;
+        const Vertex *from = m_map->getVertex(edge->fromVertex);
+        const Vertex *to = m_map->getVertex(edge->toVertex);
+        if (!from || !to)
+            continue;
 
         // 精确的可见性判断
         if (!isVisibleInView(from->position) &&
@@ -298,17 +289,22 @@ void MapView::renderEdges(QPainter& painter)
             continue;
         }
         // 检查是否高亮
-        bool isHighlighted = m_highlighter && m_highlighter->isEdgeHighlighted(i);
+        bool isHighlighted =
+            m_highlighter && m_highlighter->isEdgeHighlighted(i);
 
         // 根据车流量或高亮状态设置颜色
         QColor color;
         if (isHighlighted) {
             color = Qt::magenta;
         } else {
-            double ratio = static_cast<double>(edge->currentVehicles) / edge->capacity;
-            if (ratio < 0.3) color = Qt::green;
-            else if (ratio < 0.7) color = Qt::yellow;
-            else color = Qt::red;
+            double ratio =
+                static_cast<double>(edge->currentVehicles) / edge->capacity;
+            if (ratio < 0.3)
+                color = Qt::green;
+            else if (ratio < 0.7)
+                color = Qt::yellow;
+            else
+                color = Qt::red;
         }
         painter.setPen(QPen(color, isHighlighted ? 4 : 2));
         painter.drawLine(from->position, to->position);
@@ -316,8 +312,8 @@ void MapView::renderEdges(QPainter& painter)
     if (!m_currentPath.empty()) {
         painter.setPen(QPen(Qt::yellow, 4));
         for (size_t i = 0; i < m_currentPath.size() - 1; ++i) {
-            const Vertex* v1 = m_map->getVertex(m_currentPath[i]);
-            const Vertex* v2 = m_map->getVertex(m_currentPath[i+1]);
+            const Vertex *v1 = m_map->getVertex(m_currentPath[i]);
+            const Vertex *v2 = m_map->getVertex(m_currentPath[i + 1]);
             if (v1 && v2) {
                 painter.drawLine(v1->position, v2->position);
             }
@@ -332,27 +328,28 @@ void MapView::clearPath() {
     m_endVertex = -1;
     update();
 }
-void MapView::setPath(const std::vector<int>& path) {
+void MapView::setPath(const std::vector<int> &path) {
     m_currentPath = path;
     update();
 }
 
-
-void MapView::renderVertices(QPainter& painter)
-{
-    if (!m_map) return;
+void MapView::renderVertices(QPainter &painter) {
+    if (!m_map)
+        return;
     QPolygonF visiblePoly = getVisibleWorldPolygon();
-    const int vertexCount = m_map->getVertexCount();
+    const int vertexCount = m_map->Vertexcount;
 
     // 先绘制普通顶点
     painter.setPen(Qt::black);
     painter.setBrush(Qt::blue);
     for (int i = 0; i < vertexCount; ++i) {
-        const Vertex* vertex = m_map->getVertex(i);
-        if (!vertex || !isVisibleInView(vertex->position)) continue;
+        const Vertex *vertex = m_map->getVertex(i);
+        if (!vertex || !isVisibleInView(vertex->position))
+            continue;
 
         // 检查是否高亮
-        bool isHighlighted = m_highlighter && m_highlighter->isVertexHighlighted(i);
+        bool isHighlighted =
+            m_highlighter && m_highlighter->isVertexHighlighted(i);
         if (isHighlighted) {
             painter.setBrush(Qt::red);
             painter.drawEllipse(vertex->position, 5, 5);
@@ -363,9 +360,9 @@ void MapView::renderVertices(QPainter& painter)
     }
 }
 
-void MapView::renderVehicles(QPainter& painter)
-{
-    if (!m_map || !m_simulator) return;
+void MapView::renderVehicles(QPainter &painter) {
+    if (!m_map || !m_simulator)
+        return;
 
     painter.setPen(Qt::black);
     painter.setBrush(Qt::red);
@@ -376,25 +373,23 @@ void MapView::renderVehicles(QPainter& painter)
 }
 
 // =====视角控制=====
-void MapView::zoom(double factor)
-{
+void MapView::zoom(double factor) {
     m_zoomLevel *= factor;
     m_zoomLevel = qBound(0.1, m_zoomLevel, 10.0);
     update();
 }
 
-void MapView::pan(const QPointF& delta)
-{
+void MapView::pan(const QPointF &delta) {
     m_viewCenter += delta;
     update();
 }
 
-void MapView::rotate(double angle)
-{
+void MapView::rotate(double angle) {
     m_rotation += angle;
     // 保持角度在0-2π范围内
-    while (m_rotation > 2*M_PI) m_rotation -= 2*M_PI;
-    while (m_rotation < 0) m_rotation += 2*M_PI;
+    while (m_rotation > 2 * M_PI)
+        m_rotation -= 2 * M_PI;
+    while (m_rotation < 0)
+        m_rotation += 2 * M_PI;
     update();
 }
-

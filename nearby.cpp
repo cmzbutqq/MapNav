@@ -1,18 +1,18 @@
 #include "nearby.h"
+#include <QDebug>
 #include <QPair>
 #include <algorithm>
-#include <QDebug>
 
-NearbyHighlighter::NearbyHighlighter(Map* map, QObject* parent)
-    : QObject(parent), m_map(map)
-{
+NearbyHighlighter::NearbyHighlighter(Map *map, QObject *parent)
+    : QObject(parent), m_map(map) {
     m_resetTimer.setSingleShot(true);
-    connect(&m_resetTimer, &QTimer::timeout, this, &NearbyHighlighter::resetHighlight);
+    connect(&m_resetTimer, &QTimer::timeout, this,
+            &NearbyHighlighter::resetHighlight);
 }
 
-void NearbyHighlighter::highlightNearby(const QPointF& center)
-{
-    if (!m_map) return;
+void NearbyHighlighter::highlightNearby(const QPointF &center) {
+    if (!m_map)
+        return;
 
     // 清空之前的高亮
     m_highlightedVertices.clear();
@@ -20,9 +20,10 @@ void NearbyHighlighter::highlightNearby(const QPointF& center)
 
     // 收集所有顶点及其距离
     QVector<QPair<double, int>> verticesWithDistance;
-    for (int i = 0; i < m_map->getVertexCount(); ++i) {
-        const Vertex* vertex = m_map->getVertex(i);
-        if (!vertex) continue;
+    for (int i = 0; i < m_map->Vertexcount; ++i) {
+        const Vertex *vertex = m_map->getVertex(i);
+        if (!vertex)
+            continue;
 
         double dx = vertex->position.x() - center.x();
         double dy = vertex->position.y() - center.y();
@@ -39,8 +40,9 @@ void NearbyHighlighter::highlightNearby(const QPointF& center)
         int vertexId = verticesWithDistance[i].second;
         m_highlightedVertices.insert(vertexId);
 
-        const Vertex* vertex = m_map->getVertex(vertexId);
-        if (!vertex) continue;
+        const Vertex *vertex = m_map->getVertex(vertexId);
+        if (!vertex)
+            continue;
 
         // 添加所有相连的边
         for (int edgeId : vertex->connectedEdges) {
@@ -53,18 +55,15 @@ void NearbyHighlighter::highlightNearby(const QPointF& center)
     emit updateRequested();
 }
 
-void NearbyHighlighter::resetHighlight()
-{
+void NearbyHighlighter::resetHighlight() {
     m_highlightedVertices.clear();
     m_highlightedEdges.clear();
     emit updateRequested();
 }
-bool NearbyHighlighter::isVertexHighlighted(int vertexId) const
-{
+bool NearbyHighlighter::isVertexHighlighted(int vertexId) const {
     return m_highlightedVertices.contains(vertexId);
 }
 
-bool NearbyHighlighter::isEdgeHighlighted(int edgeId) const
-{
+bool NearbyHighlighter::isEdgeHighlighted(int edgeId) const {
     return m_highlightedEdges.contains(edgeId);
 }
