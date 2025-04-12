@@ -1,18 +1,12 @@
+
 #ifndef CORE_H
 #define CORE_H
-
+#include <random>
 #include <QPointF>
 #include <QVector>
 #include <QSet>
 #include <cmath>
 
-// =====常量定义=====
-constexpr int DEFAULT_GRID_SIZE = 100;
-constexpr double MAX_EDGE_LENGTH = 200.0;
-constexpr int MAX_VEHICLE_CAPACITY = 50;
-constexpr int MAX_VERTICES = 20000;
-constexpr int MAX_EDGES = 100000;
-constexpr int MAX_VEHICLES = 5000;
 
 // =====前置声明=====
 struct Vertex;
@@ -24,8 +18,8 @@ struct GridCell;
 struct Vertex {
     int id;
     QPointF position;
-    QSet<int> connectedEdges;
-
+    QSet<int> connectedEdges;//与其相连的边的id
+    QSet<int> connectedVertexs;//与其相连的点的id
     Vertex(int id = -1, const QPointF& pos = QPointF());
     void addEdge(int edgeId);
 };
@@ -38,20 +32,33 @@ struct Edge {
     double length;
     int capacity;
     int currentVehicles;
+    QVector<Vehicle> vehiclesets;//在边中包含车辆类，作为类的属性
 
-    Edge(int id = -1, int from = -1, int to = -1, double len = 0.0);
-    double getCurrentTravelTime() const;
-    void vehicleEnter();
-    void vehicleLeave();
+
+    Edge(int id , int from,int to, double len );
+    double getCurrentTravelTime() ;
+    bool ishappeningaccident();
+
+    // 生成指定范围 [a, b] 内的随机数
+    double randomInRange(double a, double b) {
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_real_distribution<> dis(a, b);
+        return dis(gen);
+    }
 };
 
-// =====车辆类=====
+// =====车辆类以及实现=====
 struct Vehicle {
-    int id;
+
     int currentEdge;
     double progress;
+    int from ;
+    int to;
+    bool processed;//专门用于模拟类中防止一辆车在update中被多次更新
+    Vehicle( int edge ,int fromv,int tov,double pro):currentEdge(edge),progress(pro) , from(fromv), to(tov)
+    {};
 
-    Vehicle(int id = -1, int edge = -1, double prog = 0.0);
 };
 
 // =====网格单元类=====
@@ -64,36 +71,45 @@ struct GridCell {
 class Map {
 public:
     Map();
-    int addVertex(const QPointF& pos);
-    int addEdge(int from, int to);
-    const Vertex* getVertex(int id) const;
-    const Edge* getEdge(int id) const;
-    const GridCell* getGridCell(int x, int y) const;
-    int getGridSize() const;
-    int getVertexCount() const;
-    int getEdgeCount() const;
-    void generateRandomGraph(int vertexCount);
 
-private:
-    static const int GRID_DIM = 1000 / DEFAULT_GRID_SIZE + 1;
-    int nextVertexId;
-    int nextEdgeId;
+    const Vertex* getVertex(int id) ;
+    const Edge* getEdge(int id) ;
+    const GridCell* getGridCell(int x, int y) ;
+    int getGridSize();
+    int getVertexCount() ;
+    int getEdgeCount() ;//这几个函数我没用到
+
+
+    // 生成指定范围 [a, b] 内的随机数
+    double randomInRange(double a, double b) {
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_real_distribution<> dis(a, b);
+        return dis(gen);
+    }
+
+//我直接声明为公有的了，私有太麻烦了
+    static const int GRID_DIM = 15;
+    int Vertexcount;
+    int Edgecount;
     int gridSize;
     QVector<Vertex> vertices;
     QVector<Edge> edges;
     GridCell grid[GRID_DIM][GRID_DIM];
+
 };
 
 // =====模拟器类=====
-class Simulator {
+class Simulator
+{
 public:
-    Simulator();
-    int addVehicle(int edgeId = -1);
+    Simulator(Map* map);
+
     void update(double deltaTime);
 
 private:
-    int nextVehicleId;
-    QVector<Vehicle> vehicles;
-};
 
+    Map* m_map;
+
+};
 #endif // CORE_H
