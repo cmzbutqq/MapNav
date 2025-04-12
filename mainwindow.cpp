@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 创建地图和模拟器
     Map* map = new Map();
-    map->generateRandomGraph(1000);
+    map->generateRandomGraph(10000);//当调成10000之后，即使放大也难以看清楚路线，需要改
 
     Simulator* simulator = new Simulator();
 
