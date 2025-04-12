@@ -139,8 +139,8 @@ void MapView::mousePressEvent(QMouseEvent* event) {
                 } else if (m_endVertex == -1) {
                     m_endVertex = nearest;
                     // 执行寻路
-                    auto finder = PathFinder::create(PathFinder::Algorithm::Dijkstra, m_map);
-                    auto result = finder->findPath(m_startVertex, m_endVertex);
+                    Dijkstra pathfinder = Dijkstra(m_map,m_startVertex, m_endVertex,true);
+                    PathResult result = pathfinder.findPath();
                     if (result.success) {
                         setPath(result.path);
                     }
