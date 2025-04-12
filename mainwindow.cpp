@@ -13,10 +13,10 @@ MainWindow::MainWindow(QWidget *parent)
     setCentralWidget(m_mapView);
 
     // 创建地图和模拟器
-    Map* map = new Map();
-    map->generateRandomGraph(10000);//当调成10000之后，即使放大也难以看清楚路线，需要改
+    Map* map = new Map();  // 构造函数已经生成随机图
 
-    Simulator* simulator = new Simulator();
+    // 正确初始化 Simulator，传入 map 参数
+    Simulator* simulator = new Simulator(map);
 
     // 设置视图
     m_mapView->setMap(map);
