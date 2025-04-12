@@ -72,7 +72,7 @@ class Map {
 public:
     Map();
 
-    const Vertex* getVertex(int id) ;
+    const Vertex* getVertex(int id) const;
     const Edge* getEdge(int id) ;
     const GridCell* getGridCell(int x, int y) ;
     int getGridSize();

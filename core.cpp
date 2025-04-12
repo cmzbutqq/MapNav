@@ -229,7 +229,10 @@ addedEdges.insert(edge);：将当前边添加到 addedEdges 集合中，以便�
     }
     Edgecount=edges.count();
 }
-
+const Vertex* Map::getVertex(int id) const{
+    if (id < 0 || id >= Vertexcount) return nullptr;
+    return &vertices[id];
+}
 
 // =====模拟器类实现=====
 Simulator::Simulator(Map* map) : m_map(map) {}
