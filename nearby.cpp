@@ -1,4 +1,5 @@
 #include "nearby.h"
+#include "core.h"
 #include <QDebug>
 #include <QPair>
 #include <algorithm>
