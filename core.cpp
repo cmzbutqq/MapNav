@@ -75,7 +75,7 @@ bool isCrossing(const QPointF &p1, const QPointF &p2, const QPointF &p3,
 
 // =====地图类实现=====
 Map::Map() {
-    Vertexcount = 10;
+    Vertexcount = 100;
     gridSize = GRID_DIM;
 
     // 随机生成顶点
@@ -173,7 +173,7 @@ Map::Map() {
                     .end()) { // edge不在addededges中，addededges中的边都是小数结点指向大数结点，这样防止边重复
                 validEdge = true;
                 // 检查新边是否与现有边交叉
-                for (const auto &existingEdge : edges) { // 这里也是一样的，崔少旭你是不是觉得GPT生成个代码糊上去就行了？
+                for (const auto &existingEdge : edges) { // 你就一定要遍历所有边吗？
                     if (isCrossing(vertices[from].position,
                                    vertices[to].position,
                                    vertices[existingEdge.fromVertex].position,
@@ -183,7 +183,7 @@ Map::Map() {
                     }
                 }
             }
-        } while (!validEdge);
+        } while (!validEdge); // 这里也是一样的，你不怕死循环？
 
         double len = std::sqrt(
             (vertices[from].position.x() - vertices[to].position.x()) *
