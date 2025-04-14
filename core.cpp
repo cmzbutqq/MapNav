@@ -2,9 +2,9 @@
 #include <QRandomGenerator>
 #include <algorithm>
 #include <iostream>
+#include <queue>
 #include <set>
 #include <vector>
-#include <queue>
 
 // =====顶点类实现=====
 Vertex::Vertex(int id, const QPointF &pos) : id(id), position(pos) {}
@@ -53,12 +53,15 @@ bool Edge::ishappeningaccident() {
 // =====网格单元类实现=====
 void GridCell::addVertex(int vertexId) { vertices.insert(vertexId); }
 
-
 // 判断两条线段是否交叉的辅助函数
-bool isCrossing(const QPointF& p1, const QPointF& p2, const QPointF& p3, const QPointF& p4) {
-    auto orientation = [](const QPointF& p, const QPointF& q, const QPointF& r) {
-        double val = (q.y() - p.y()) * (r.x() - q.x()) - (q.x() - p.x()) * (r.y() - q.y());
-        if (val == 0) return 0;  // 共线
+bool isCrossing(const QPointF &p1, const QPointF &p2, const QPointF &p3,
+                const QPointF &p4) {
+    auto orientation = [](const QPointF &p, const QPointF &q,
+                          const QPointF &r) {
+        double val = (q.y() - p.y()) * (r.x() - q.x()) -
+                     (q.x() - p.x()) * (r.y() - q.y());
+        if (val == 0)
+            return 0;             // 共线
         return (val > 0) ? 1 : 2; // 顺时针或逆时针
     };
 
@@ -84,19 +87,29 @@ Map::Map() {
 
     // 生成最小生成树（MST）
     std::vector<bool> inMST(Vertexcount, false);
-    std::priority_queue<std::pair<double, std::pair<int, int>>, std::vector<std::pair<double, std::pair<int, int>>>, std::greater<std::pair<double, std::pair<int, int>>>> pq;
+    std::priority_queue<std::pair<double, std::pair<int, int>>,
+                        std::vector<std::pair<double, std::pair<int, int>>>,
+                        std::greater<std::pair<double, std::pair<int, int>>>>
+        pq;
     inMST[0] = true;
     /*创建一个优先队列 pq，用于存储待处理的边。
 详细解释：
-std::priority_queue 是 C++ 标准库中的优先队列容器，它会自动根据元素的优先级进行排序，每次取出的元素都是优先级最高的元素。
-std::pair<double, std::pair<int, int>> 是队列中存储的元素类型，其中 double 表示边的权值（长度），std::pair<int, int> 表示边的两个端点的编号。
-std::vector<std::pair<double, std::pair<int, int>>> 是优先队列的底层容器类型，用于存储元素。
-std::greater<std::pair<double, std::pair<int, int>>> 是比较函数，用于定义元素的优先级。这里使用 std::greater 表示按照边的权值从小到大排序，即每次取出的边都是权值最小的边。*/
+std::priority_queue 是 C++
+标准库中的优先队列容器，它会自动根据元素的优先级进行排序，每次取出的元素都是优先级最高的元素。
+std::pair<double, std::pair<int, int>> 是队列中存储的元素类型，其中 double
+表示边的权值（长度），std::pair<int, int> 表示边的两个端点的编号。
+std::vector<std::pair<double, std::pair<int, int>>>
+是优先队列的底层容器类型，用于存储元素。 std::greater<std::pair<double,
+std::pair<int, int>>> 是比较函数，用于定义元素的优先级。这里使用 std::greater
+表示按照边的权值从小到大排序，即每次取出的边都是权值最小的边。*/
 
     // 初始化优先队列
     for (int i = 1; i < Vertexcount; i++) {
-        double len = std::sqrt((vertices[0].position.x() - vertices[i].position.x()) * (vertices[0].position.x() - vertices[i].position.x()) +
-                               (vertices[0].position.y() - vertices[i].position.y()) * (vertices[0].position.y() - vertices[i].position.y()));
+        double len = std::sqrt(
+            (vertices[0].position.x() - vertices[i].position.x()) *
+                (vertices[0].position.x() - vertices[i].position.x()) +
+            (vertices[0].position.y() - vertices[i].position.y()) *
+                (vertices[0].position.y() - vertices[i].position.y()));
         pq.push({len, {0, i}});
     }
 
@@ -109,13 +122,23 @@ std::greater<std::pair<double, std::pair<int, int>>> 是比较函数，用于定
         pq.pop();
         double len = top.first;
         int from = top.second.first;
-        int to = top.second.second;//这里的from 是已经在mst中的点了，to 是待检测是否能加入的点，把这块代码完整看完就直到为什么from一定是mst 中的点
+        int to =
+            top.second
+                .second; // 这里的from 是已经在mst中的点了，to
+                         // 是待检测是否能加入的点，把这块代码完整看完就直到为什么from一定是mst
+                         // 中的点
 
-        if (inMST[to]) continue;
+        if (inMST[to])
+            continue;
 
         inMST[to] = true;
-        std::pair<int, int> edge = std::make_pair(std::min(from, to), std::max(from, to));//通过这种方式，无论 from 和 to 的顺序如何，edge 都会以统一的顺序表示同一条边，
-        if (addedEdges.find(edge) == addedEdges.end()) {//如果 edge 不在 addedEdges 集合中
+        std::pair<int, int> edge = std::make_pair(
+            std::min(from, to),
+            std::max(from,
+                     to)); // 通过这种方式，无论 from 和 to 的顺序如何，edge
+                           // 都会以统一的顺序表示同一条边，
+        if (addedEdges.find(edge) ==
+            addedEdges.end()) { // 如果 edge 不在 addedEdges 集合中
             mstEdges.push_back(Edge(Edgecount++, from, to, len));
             vertices[from].addEdge(Edgecount - 1);
             vertices[to].addEdge(Edgecount - 1);
@@ -124,8 +147,11 @@ std::greater<std::pair<double, std::pair<int, int>>> 是比较函数，用于定
 
         for (int i = 0; i < Vertexcount; i++) {
             if (!inMST[i]) {
-                double newLen = std::sqrt((vertices[to].position.x() - vertices[i].position.x()) * (vertices[to].position.x() - vertices[i].position.x()) +
-                                          (vertices[to].position.y() - vertices[i].position.y()) * (vertices[to].position.y() - vertices[i].position.y()));
+                double newLen = std::sqrt(
+                    (vertices[to].position.x() - vertices[i].position.x()) *
+                        (vertices[to].position.x() - vertices[i].position.x()) +
+                    (vertices[to].position.y() - vertices[i].position.y()) *
+                        (vertices[to].position.y() - vertices[i].position.y()));
                 pq.push({newLen, {to, i}});
             }
         }
@@ -147,13 +173,18 @@ std::greater<std::pair<double, std::pair<int, int>>> 是比较函数，用于定
                 to = QRandomGenerator::global()->bounded(Vertexcount);
             } while (from == to);
 
-            std::pair<int, int> edge = std::make_pair(std::min(from, to), std::max(from, to));
-            if (addedEdges.find(edge) == addedEdges.end()) {//edge不在addededges中，addededges中的边都是小数结点指向大数结点，这样防止边重复
+            std::pair<int, int> edge =
+                std::make_pair(std::min(from, to), std::max(from, to));
+            if (addedEdges.find(edge) ==
+                addedEdges
+                    .end()) { // edge不在addededges中，addededges中的边都是小数结点指向大数结点，这样防止边重复
                 validEdge = true;
                 // 检查新边是否与现有边交叉
-                for (const auto& existingEdge : edges) {
-                    if (isCrossing(vertices[from].position, vertices[to].position,
-                                   vertices[existingEdge.fromVertex].position, vertices[existingEdge.toVertex].position)) {
+                for (const auto &existingEdge : edges) {
+                    if (isCrossing(vertices[from].position,
+                                   vertices[to].position,
+                                   vertices[existingEdge.fromVertex].position,
+                                   vertices[existingEdge.toVertex].position)) {
                         validEdge = false;
                         break;
                     }
@@ -161,12 +192,16 @@ std::greater<std::pair<double, std::pair<int, int>>> 是比较函数，用于定
             }
         } while (!validEdge);
 
-        double len = std::sqrt((vertices[from].position.x() - vertices[to].position.x()) * (vertices[from].position.x() - vertices[to].position.x()) +
-                               (vertices[from].position.y() - vertices[to].position.y()) * (vertices[from].position.y() - vertices[to].position.y()));
+        double len = std::sqrt(
+            (vertices[from].position.x() - vertices[to].position.x()) *
+                (vertices[from].position.x() - vertices[to].position.x()) +
+            (vertices[from].position.y() - vertices[to].position.y()) *
+                (vertices[from].position.y() - vertices[to].position.y()));
         edges.push_back(Edge(Edgecount++, from, to, len));
         vertices[from].addEdge(Edgecount - 1);
         vertices[to].addEdge(Edgecount - 1);
-        addedEdges.insert(std::make_pair(std::min(from, to), std::max(from, to)));
+        addedEdges.insert(
+            std::make_pair(std::min(from, to), std::max(from, to)));
     }
 
     // 遍历 edges 中的每一条边，对于每条边，将其终点的 id 插入到起点的
