@@ -75,7 +75,7 @@ bool isCrossing(const QPointF &p1, const QPointF &p2, const QPointF &p3,
 
 // =====地图类实现=====
 Map::Map() {
-    Vertexcount = int(randomInRange(10000, 20000));
+    Vertexcount = 10;
     gridSize = GRID_DIM;
 
     // 随机生成顶点
@@ -92,16 +92,7 @@ Map::Map() {
                         std::greater<std::pair<double, std::pair<int, int>>>>
         pq;
     inMST[0] = true;
-    /*创建一个优先队列 pq，用于存储待处理的边。
-详细解释：
-std::priority_queue 是 C++
-标准库中的优先队列容器，它会自动根据元素的优先级进行排序，每次取出的元素都是优先级最高的元素。
-std::pair<double, std::pair<int, int>> 是队列中存储的元素类型，其中 double
-表示边的权值（长度），std::pair<int, int> 表示边的两个端点的编号。
-std::vector<std::pair<double, std::pair<int, int>>>
-是优先队列的底层容器类型，用于存储元素。 std::greater<std::pair<double,
-std::pair<int, int>>> 是比较函数，用于定义元素的优先级。这里使用 std::greater
-表示按照边的权值从小到大排序，即每次取出的边都是权值最小的边。*/
+    /*创建一个优先队列 pq，用于存储待处理的边。*/
 
     // 初始化优先队列
     for (int i = 1; i < Vertexcount; i++) {
@@ -118,6 +109,8 @@ std::pair<int, int>>> 是比较函数，用于定义元素的优先级。这里�
     std::vector<Edge> mstEdges;
 
     while (!pq.empty()) {
+        // 对于10000个节点的地图来说，这里的循环会生成包含5000,0000个元素的pq,并且要将这五千万个元素一个个排空，崔少旭你确定有跑过自己写的代码吗？
+        std::cout<<"pq.size: "<<pq.size()<<std::endl;
         auto top = pq.top();
         pq.pop();
         double len = top.first;
@@ -180,7 +173,7 @@ std::pair<int, int>>> 是比较函数，用于定义元素的优先级。这里�
                     .end()) { // edge不在addededges中，addededges中的边都是小数结点指向大数结点，这样防止边重复
                 validEdge = true;
                 // 检查新边是否与现有边交叉
-                for (const auto &existingEdge : edges) {
+                for (const auto &existingEdge : edges) { // 这里也是一样的，崔少旭你是不是觉得GPT生成个代码糊上去就行了？
                     if (isCrossing(vertices[from].position,
                                    vertices[to].position,
                                    vertices[existingEdge.fromVertex].position,
